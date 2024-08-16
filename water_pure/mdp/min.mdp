@@ -1,0 +1,16 @@
+
+integrator               = steep
+nsteps                   = 50000
+
+nstenergy                = 1000
+nstlog                   = 1000
+nstxout-compressed       = 0
+
+cutoff-scheme            = Verlet
+
+coulombtype              = PME
+rcoulomb                 = 1.2
+
+vdwtype                  = Cut-off
+rvdw                     = 1.2
+DispCorr                 = EnerPres
