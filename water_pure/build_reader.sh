@@ -1,1 +1,1 @@
-g++ -O3 *.cpp -I.. -o read_traj
+g++ -O3 *.cpp -I.. -o read_traj.exe
