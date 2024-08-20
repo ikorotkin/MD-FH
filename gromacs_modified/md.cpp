@@ -219,7 +219,7 @@ int write_out_frame(int64_t step,
     if(!step)
     {
         printf("\n==== MODIFIED GROMACS -- Writes full trajectories every time step! ====\n\n");
-    }        
+    }
 
     // Should we create a new file or not
     bool new_file = !static_cast<bool>(N_out_frame_counter % N_out_frames_per_file);
@@ -1551,29 +1551,6 @@ void gmx::LegacySimulator::do_md()
                                      mdrunOptions.writeConfout,
                                      ekindataState);
 
-
-            // FIXME: Modified Gromacs - code block 2/2
-
-            /*
-             * Custom output to a binary file
-             */
-            if (MAIN(cr))
-            {
-                if (!write_out_frame(step,
-                                     t,
-                                     const_cast<rvec*>(state->box),
-                                     top_global.natoms,
-                                     const_cast<rvec*>(state_global->x.rvec_array()),
-                                     const_cast<rvec*>(state_global->x.rvec_array()),
-                                     const_cast<rvec*>(as_rvec_array(f.view().force().data())),
-                                     md->massT,
-                                     bLastStep && step_rel == ir->nsteps))
-                {
-                    gmx_file("Cannot write trajectory frame to the out-file; maybe you are out of disk space?");
-                }
-            }
-
-
             /* Check if IMD step and do IMD communication, if bIMD is TRUE. */
             bInteractiveMDstep = imdSession->run(step, bNS, state->box, state->x, t);
 
@@ -1788,6 +1765,30 @@ void gmx::LegacySimulator::do_md()
                             (simulationWork.useMts && step % ir->mtsLevels[1].stepFactor == 0)
                                     ? f.view().forceMtsCombinedWithPadding()
                                     : f.view().forceWithPadding();
+
+
+                    // FIXME: Modified Gromacs - code block 2/2
+
+                    /*
+                     * Custom output to a binary file
+                     */
+                    if (MAIN(cr))
+                    {
+                        if (!write_out_frame(step,
+                                             t,
+                                             const_cast<rvec*>(state->box),
+                                             top_global.natoms,
+                                             const_cast<rvec*>(state->x.rvec_array()),
+                                             const_cast<rvec*>(state->v.rvec_array()),
+                                             as_rvec_array(forceCombined.unpaddedConstArrayRef().data()),
+                                             md->massT,
+                                             bLastStep && step_rel == ir->nsteps))
+                        {
+                            gmx_file("Cannot write trajectory frame to the out-file; maybe you are out of disk space?");
+                        }
+                    }
+
+
                     upd.update_coords(*ir,
                                       step,
                                       md->homenr,

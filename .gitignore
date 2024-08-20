@@ -4,3 +4,7 @@
 *.log
 *.edr
 *.tpr
+
+# Build directory and executables
+build/
+*.exe

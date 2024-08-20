@@ -83,7 +83,7 @@ int write_out_frame(int64_t step,
     if(!step)
     {
         printf("\n==== MODIFIED GROMACS -- Writes full trajectories every time step! ====\n\n");
-    }        
+    }
 
     // Should we create a new file or not
     bool new_file = !static_cast<bool>(N_out_frame_counter % N_out_frames_per_file);
@@ -177,12 +177,11 @@ int write_out_frame(int64_t step,
 
     return -1;
 }
-
 ```
 
 ### Step 3.
 
-Search for `do_md_trajectory_writing` function call in `md.cpp` and add the following code block below (approximately after line 1552):
+Search for `upd.update_coords` function call in `md.cpp` and add the following code block **above** (approximately before line 1770):
 
 ```cpp
 // Modified Gromacs - code block 2/2
@@ -196,9 +195,9 @@ if (MAIN(cr))
                          t,
                          const_cast<rvec*>(state->box),
                          top_global.natoms,
-                         const_cast<rvec*>(state_global->x.rvec_array()),
-                         const_cast<rvec*>(state_global->x.rvec_array()),
-                         const_cast<rvec*>(as_rvec_array(f.view().force().data())),
+                         const_cast<rvec*>(state->x.rvec_array()),
+                         const_cast<rvec*>(state->v.rvec_array()),
+                         as_rvec_array(forceCombined.unpaddedConstArrayRef().data()),
                          md->massT,
                          bLastStep && step_rel == ir->nsteps))
     {
@@ -211,5 +210,4 @@ if (MAIN(cr))
 
 Rebuild modified GROMACS.
 
-Here is an [example](md.cpp) of modified `md.cpp` file for GROMACS 2023.1.
-
+Here is an [example](https://github.com/ikorotkin/MD-FH/blob/master/gromacs_modified/md.cpp) of modified `md.cpp` file for GROMACS 2023.1.
