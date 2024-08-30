@@ -5,6 +5,12 @@
 *.edr
 *.tpr
 
+# Production files
+spce_*.*
+
 # Build directory and executables
 build/
 *.exe
+
+# Archives
+*.zip
