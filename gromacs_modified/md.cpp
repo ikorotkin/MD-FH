@@ -250,15 +250,10 @@ int write_out_frame(int64_t step,
         // Open binary file for writing
         out_file.open(fname, std::ios::binary);
 
-        // Check if the file is opened successfully and write atom masses at the beginning of each file
+        // Check if the file is opened successfully
         if(out_file && out_file.is_open())
         {
-            write_data_to_out(natoms);  // Number of atoms (int)
-
-            for(int n = 0; n < natoms; n++)
-            {
-                write_data_to_out(mass[n]);  // Atom mass (float)
-            }
+            // All good
         }
         else
         {
@@ -287,11 +282,13 @@ int write_out_frame(int64_t step,
         // Frame
         for(int n = 0; n < natoms; n++)
         {
+            write_data_to_out(mass[n]);  // Atom mass (float)
+
             for(int d = 0; d < 3; d++)
             {
                 write_data_to_out(x[n][d]);  // Coordinates (float)
                 write_data_to_out(v[n][d]);  // Velocities (float)
-                write_data_to_out(f[n][d]);  // Forces (float)
+                // write_data_to_out(f[n][d]);  // Forces (float)
             }
         }
     }
