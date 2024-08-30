@@ -24,7 +24,7 @@ struct frame
 
     float_vec box; // Box size
 
-    std::vector<float_type> m; // Mass
+    std::vector<float_type> mass; // Mass
 
     std::vector<float_vec> r; // Coordinate
     std::vector<float_vec> v; // Velocity
@@ -75,10 +75,10 @@ int read(const std::string &fname, traj &trj)
         }
 
         // Allocate memory for the frame if needed
-        if (f.m.size() == 0)
+        if (f.mass.size() == 0)
         {
             natoms = f.natoms; // Number of atoms should not change
-            f.m.resize(natoms);
+            f.mass.resize(natoms);
             f.r.resize(natoms);
             f.v.resize(natoms);
 #ifdef MD_FORCES
@@ -95,7 +95,7 @@ int read(const std::string &fname, traj &trj)
         // Read frame
         for (int n = 0; n < natoms; n++)
         {
-            in_file.read(reinterpret_cast<char *>(&f.m[n]), float_type_size);
+            in_file.read(reinterpret_cast<char *>(&f.mass[n]), float_type_size);
             in_file.read(reinterpret_cast<char *>(&f.r[n].x), float_type_size);
             in_file.read(reinterpret_cast<char *>(&f.v[n].x), float_type_size);
 #ifdef MD_FORCES

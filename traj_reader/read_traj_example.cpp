@@ -27,7 +27,7 @@ int main()
         for (int n = 0; n < 5; n++)
         {
             std::cout << " -- atom #" << n << ": "
-                      << "mass = " << trj[i].m[n] << ";  "
+                      << "mass = " << trj[i].mass[n] << ";  "
                       << "coord = (" << trj[i].r[n].x << ", " << trj[i].r[n].y << ", " << trj[i].r[n].z << ");  "
                       << "velocity = (" << trj[i].v[n].x << ", " << trj[i].v[n].y << ", " << trj[i].v[n].z << ");  "
                       << "\n";
