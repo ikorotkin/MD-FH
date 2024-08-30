@@ -1,4 +1,5 @@
 #include <array>
+#include <fstream>
 
 #include "traj_reader/reader.hpp"
 
@@ -24,14 +25,101 @@ struct Data
 {
     std::array<std::vector<double>, N_grids> density;
 
-    Data()
+    std::array<std::vector<double>, N_grids> mom_x;
+    std::array<std::vector<double>, N_grids> mom_y;
+    std::array<std::vector<double>, N_grids> mom_z;
+
+    std::array<std::vector<double>, N_grids> ekin_xx;
+    std::array<std::vector<double>, N_grids> ekin_yy;
+    std::array<std::vector<double>, N_grids> ekin_zz;
+    std::array<std::vector<double>, N_grids> ekin_xy;
+    std::array<std::vector<double>, N_grids> ekin_xz;
+    std::array<std::vector<double>, N_grids> ekin_yz;
+
+    double time{0.0};
+
+    int step{0};
+
+    /*
+     * Resets statistics
+     */
+    void reset()
     {
         for (int i = 0; i < N_grids; ++i)
         {
+            density[i].clear();
+            mom_x[i].clear();
+            mom_y[i].clear();
+            mom_z[i].clear();
+            ekin_xx[i].clear();
+            ekin_yy[i].clear();
+            ekin_zz[i].clear();
+            ekin_xy[i].clear();
+            ekin_xz[i].clear();
+            ekin_yz[i].clear();
+
             density[i].resize(cube(grids[i]), 0.0);
+            mom_x[i].resize(cube(grids[i]), 0.0);
+            mom_y[i].resize(cube(grids[i]), 0.0);
+            mom_z[i].resize(cube(grids[i]), 0.0);
+            ekin_xx[i].resize(cube(grids[i]), 0.0);
+            ekin_yy[i].resize(cube(grids[i]), 0.0);
+            ekin_zz[i].resize(cube(grids[i]), 0.0);
+            ekin_xy[i].resize(cube(grids[i]), 0.0);
+            ekin_xz[i].resize(cube(grids[i]), 0.0);
+            ekin_yz[i].resize(cube(grids[i]), 0.0);
         }
+
+        time = 0.0;
+        step = 0;
+    }
+
+    Data()
+    {
+        reset();
     }
 };
+
+/*
+ * Saves data to data files
+ */
+int save_data(const std::vector<Data> &collection)
+{
+    for (int ng = 0; ng < N_grids; ++ng)
+    {
+        std::ofstream outfile;
+
+        std::string fname = "output_" + std::to_string(grids[ng]) + ".dat";
+
+        outfile.open(fname, std::ios::app);
+
+        constexpr char delimiter = '\t';
+
+        outfile << "time_step" << delimiter << "time" << delimiter
+                << "density" << delimiter
+                << "m_x" << delimiter << "m_y" << delimiter << "m_z" << delimiter
+                << "Ekin_xx" << delimiter << "Ekin_yy" << delimiter << "Ekin_zz" << delimiter
+                << "Ekin_xy" << delimiter << "Ekin_xz" << delimiter << "Ekin_yz" << '\n';
+
+        std::size_t size = collection.size();
+
+        for (const auto &data : collection)
+        {
+            outfile << data.step << delimiter << data.time;
+
+            for (int ind = 0; ind < data.density[ng].size() - 1; ++ind)
+            {
+                outfile << delimiter << data.density[ng][ind];
+            }
+
+            outfile << '\n';
+        }
+
+        outfile.close();
+    }
+
+    return 0;
+}
 
 /*
  * Entry point
@@ -71,12 +159,18 @@ int main()
     // Box volume
     double V0 = cube<double>(L0); // [nm^3]
 
+    std::cout << "Processing..." << std::flush;
+
     // Output data
     Data data;
+    std::vector<Data> collection;
 
     // Loop over frames
     for (int i = 0; i < nframes; ++i)
     {
+        // Reset statistics
+        data.reset();
+
         // Frame header (Frame number, current time step, number of atoms, current time, box size)
         int step = trj[i].step;
         int atoms = trj[i].natoms;
@@ -147,14 +241,46 @@ int main()
                 int ind = i + N * j + N * N * k;
 
                 // CV volume [nm]
-                const double V = cube<double>(L / N);
+                const double V_cell = cube<double>(L / N);
 
-                // Collect data
-                data.density[ng][ind] += mass / V;
+                // Density
+                data.density[ng][ind] += mass / V_cell;
+
+                // Momentum
+                data.mom_x[ng][ind] += mass * v.x / V_cell;
+                data.mom_y[ng][ind] += mass * v.y / V_cell;
+                data.mom_z[ng][ind] += mass * v.z / V_cell;
+
+                // Kinetic energy tensor
+                data.ekin_xx[ng][ind] += 0.5 * mass * v.x * v.x / V_cell;
+                data.ekin_yy[ng][ind] += 0.5 * mass * v.y * v.y / V_cell;
+                data.ekin_zz[ng][ind] += 0.5 * mass * v.z * v.z / V_cell;
+                data.ekin_xy[ng][ind] += 0.5 * mass * v.x * v.y / V_cell;
+                data.ekin_xz[ng][ind] += 0.5 * mass * v.x * v.z / V_cell;
+                data.ekin_yz[ng][ind] += 0.5 * mass * v.y * v.z / V_cell;
+
+                // Time and step
+                data.time = time;
+                data.step = step;
 
             } // Grids
+
         } // Atoms
+
+        collection.emplace_back(data);
+
     } // Frames
+
+    std::cout << "done.\n";
+    std::cout << "Writing..." << std::flush;
+
+    if (save_data(collection))
+    {
+        std::cerr << "\nERROR: Could not save data.\n";
+        exit(1);
+    };
+
+    std::cout << "done.\n";
 
     return 0;
 }
