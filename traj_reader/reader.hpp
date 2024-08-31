@@ -8,13 +8,22 @@
 namespace traj_reader
 {
 
+/*
+ * Base type - single precision
+ */
 typedef float float_type;
 
+/*
+ * 3D vector
+ */
 struct float_vec
 {
     float_type x, y, z;
 };
 
+/*
+ * Contains data related to a single frame
+ */
 struct frame
 {
     int natoms{0}; // Number of atoms
@@ -33,10 +42,14 @@ struct frame
 #endif
 };
 
-typedef std::vector<frame> traj; // Trajectory
+/*
+ * A vector of frames - trajectory
+ */
+typedef std::vector<frame> traj;
 
 /*
- * Reads trajectory from the output file
+ * Reads trajectory from the output file.
+ * Returns the number of atoms or 0 in case of error.
  */
 int read(const std::string &fname, traj &trj)
 {
@@ -54,8 +67,9 @@ int read(const std::string &fname, traj &trj)
     frame f;
 
     // Number of atoms
-    int natoms = 0;
+    int natoms{0};
 
+    // Read file
     while (!in_file.eof())
     {
         // Read header
@@ -65,8 +79,6 @@ int read(const std::string &fname, traj &trj)
         in_file.read(reinterpret_cast<char *>(&f.box.x), sizeof(f.box.x));
         in_file.read(reinterpret_cast<char *>(&f.box.y), sizeof(f.box.y));
         in_file.read(reinterpret_cast<char *>(&f.box.z), sizeof(f.box.z));
-
-        const int float_type_size = sizeof(float_type);
 
         if (f.natoms <= 0)
         {
@@ -95,21 +107,21 @@ int read(const std::string &fname, traj &trj)
         // Read frame
         for (int n = 0; n < natoms; n++)
         {
-            in_file.read(reinterpret_cast<char *>(&f.mass[n]), float_type_size);
-            in_file.read(reinterpret_cast<char *>(&f.r[n].x), float_type_size);
-            in_file.read(reinterpret_cast<char *>(&f.v[n].x), float_type_size);
+            in_file.read(reinterpret_cast<char *>(&f.mass[n]), sizeof(float_type));
+            in_file.read(reinterpret_cast<char *>(&f.r[n].x), sizeof(float_type));
+            in_file.read(reinterpret_cast<char *>(&f.v[n].x), sizeof(float_type));
 #ifdef MD_FORCES
-            in_file.read(reinterpret_cast<char *>(&f.f[n].x), float_type_size);
+            in_file.read(reinterpret_cast<char *>(&f.f[n].x), sizeof(float_type));
 #endif
-            in_file.read(reinterpret_cast<char *>(&f.r[n].y), float_type_size);
-            in_file.read(reinterpret_cast<char *>(&f.v[n].y), float_type_size);
+            in_file.read(reinterpret_cast<char *>(&f.r[n].y), sizeof(float_type));
+            in_file.read(reinterpret_cast<char *>(&f.v[n].y), sizeof(float_type));
 #ifdef MD_FORCES
-            in_file.read(reinterpret_cast<char *>(&f.f[n].y), float_type_size);
+            in_file.read(reinterpret_cast<char *>(&f.f[n].y), sizeof(float_type));
 #endif
-            in_file.read(reinterpret_cast<char *>(&f.r[n].z), float_type_size);
-            in_file.read(reinterpret_cast<char *>(&f.v[n].z), float_type_size);
+            in_file.read(reinterpret_cast<char *>(&f.r[n].z), sizeof(float_type));
+            in_file.read(reinterpret_cast<char *>(&f.v[n].z), sizeof(float_type));
 #ifdef MD_FORCES
-            in_file.read(reinterpret_cast<char *>(&f.f[n].z), float_type_size);
+            in_file.read(reinterpret_cast<char *>(&f.f[n].z), sizeof(float_type));
 #endif
         }
 
