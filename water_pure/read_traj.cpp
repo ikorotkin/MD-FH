@@ -23,7 +23,7 @@ std::array<int, N_grids> grids = {3, 5, 7, 10, 15, 21, 32};
  */
 struct Data
 {
-    std::array<std::vector<double>, N_grids> density;
+    std::array<std::vector<double>, N_grids> dens;
 
     std::array<std::vector<double>, N_grids> mom_x;
     std::array<std::vector<double>, N_grids> mom_y;
@@ -47,7 +47,7 @@ struct Data
     {
         for (int i = 0; i < N_grids; ++i)
         {
-            density[i].clear();
+            dens[i].clear();
             mom_x[i].clear();
             mom_y[i].clear();
             mom_z[i].clear();
@@ -58,7 +58,7 @@ struct Data
             ekin_xz[i].clear();
             ekin_yz[i].clear();
 
-            density[i].resize(cube(grids[i]), 0.0);
+            dens[i].resize(cube(grids[i]), 0.0);
             mom_x[i].resize(cube(grids[i]), 0.0);
             mom_y[i].resize(cube(grids[i]), 0.0);
             mom_z[i].resize(cube(grids[i]), 0.0);
@@ -83,7 +83,56 @@ struct Data
 /*
  * Saves data to data files
  */
-int save_data(const std::vector<Data> &collection)
+// int save_data(const std::vector<Data> &collection)
+// {
+//     for (int ng = 0; ng < N_grids; ++ng)
+//     {
+//         std::ofstream outfile;
+
+//         std::string fname = "output_" + std::to_string(grids[ng]) + ".dat";
+
+//         outfile.open(fname);
+
+//         constexpr char delimiter = '\t';
+
+//         outfile << "time_step" << delimiter << "time" << delimiter
+//                 << "density" << delimiter
+//                 << "m_x" << delimiter << "m_y" << delimiter << "m_z" << delimiter
+//                 << "Ekin_xx" << delimiter << "Ekin_yy" << delimiter << "Ekin_zz" << delimiter
+//                 << "Ekin_xy" << delimiter << "Ekin_xz" << delimiter << "Ekin_yz" << '\n';
+
+//         // std::size_t size = collection.size();
+
+//         for (const auto &data : collection)
+//         {
+//             outfile << data.step << delimiter << data.time;
+
+//             for (int ind = 0; ind < data.dens[ng].size() - 1; ++ind)
+//             {
+//                 outfile << delimiter << data.dens[ng][ind];
+//             }
+
+//             outfile << '\n';
+//         }
+
+//         outfile.close();
+//     }
+
+//     return 0;
+// }
+
+/*
+* Writes a single float value in a binary format
+*/
+inline void write_float(std::ofstream &f, float val)
+{
+    f.write(reinterpret_cast<char*>(&val), sizeof(float));
+}
+
+/*
+ * Saves data to data files in binary format
+ */
+int save_data_bin(const std::vector<Data> &collection)
 {
     for (int ng = 0; ng < N_grids; ++ng)
     {
@@ -91,31 +140,36 @@ int save_data(const std::vector<Data> &collection)
 
         std::string fname = "output_" + std::to_string(grids[ng]) + ".dat";
 
-        outfile.open(fname, std::ios::app);
+        outfile.open(fname, std::ios::binary);
 
-        constexpr char delimiter = '\t';
-
-        outfile << "time_step" << delimiter << "time" << delimiter
-                << "density" << delimiter
-                << "m_x" << delimiter << "m_y" << delimiter << "m_z" << delimiter
-                << "Ekin_xx" << delimiter << "Ekin_yy" << delimiter << "Ekin_zz" << delimiter
-                << "Ekin_xy" << delimiter << "Ekin_xz" << delimiter << "Ekin_yz" << '\n';
-
-        std::size_t size = collection.size();
-
-        for (const auto &data : collection)
+        if(outfile && outfile.is_open())
         {
-            outfile << data.step << delimiter << data.time;
-
-            for (int ind = 0; ind < data.density[ng].size() - 1; ++ind)
+            for (const auto &data : collection)
             {
-                outfile << delimiter << data.density[ng][ind];
+                write_float(outfile, data.time);
+
+                // TODO: Would 10 separate loops be faster?
+                for (int ind = 0; ind < data.dens[ng].size() - 1; ++ind)
+                {
+                    write_float(outfile, data.dens[ng][ind]);
+                    write_float(outfile, data.mom_x[ng][ind]);
+                    write_float(outfile, data.mom_y[ng][ind]);
+                    write_float(outfile, data.mom_z[ng][ind]);
+                    write_float(outfile, data.ekin_xx[ng][ind]);
+                    write_float(outfile, data.ekin_yy[ng][ind]);
+                    write_float(outfile, data.ekin_zz[ng][ind]);
+                    write_float(outfile, data.ekin_xy[ng][ind]);
+                    write_float(outfile, data.ekin_xz[ng][ind]);
+                    write_float(outfile, data.ekin_yz[ng][ind]);
+                }
             }
 
-            outfile << '\n';
+            outfile.close();
         }
-
-        outfile.close();
+        else
+        {
+            return -1;  // Error opening file
+        }
     }
 
     return 0;
@@ -244,7 +298,7 @@ int main()
                 const double V_cell = cube<double>(L / N);
 
                 // Density
-                data.density[ng][ind] += mass / V_cell;
+                data.dens[ng][ind] += mass / V_cell;
 
                 // Momentum
                 data.mom_x[ng][ind] += mass * v.x / V_cell;
@@ -252,6 +306,7 @@ int main()
                 data.mom_z[ng][ind] += mass * v.z / V_cell;
 
                 // Kinetic energy tensor
+                // TODO: Remove 0.5, add density
                 data.ekin_xx[ng][ind] += 0.5 * mass * v.x * v.x / V_cell;
                 data.ekin_yy[ng][ind] += 0.5 * mass * v.y * v.y / V_cell;
                 data.ekin_zz[ng][ind] += 0.5 * mass * v.z * v.z / V_cell;
@@ -274,7 +329,7 @@ int main()
     std::cout << "done.\n";
     std::cout << "Writing..." << std::flush;
 
-    if (save_data(collection))
+    if (save_data_bin(collection))
     {
         std::cerr << "\nERROR: Could not save data.\n";
         exit(1);
