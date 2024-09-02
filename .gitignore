@@ -5,6 +5,10 @@
 *.log
 *.edr
 *.tpr
+*.txt
+
+# Images
+*.png
 
 # Production files
 spce_*.*

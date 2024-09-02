@@ -107,7 +107,7 @@ struct Data
 //         {
 //             outfile << data.step << delimiter << data.time;
 
-//             for (int ind = 0; ind < data.dens[ng].size() - 1; ++ind)
+//             for (int ind = 0; ind < data.dens[ng].size(); ++ind)
 //             {
 //                 outfile << delimiter << data.dens[ng][ind];
 //             }
@@ -149,7 +149,7 @@ int save_data_bin(const std::vector<Data> &collection)
                 write_float(outfile, data.time);
 
                 // TODO: Would 10 separate loops be faster?
-                for (int ind = 0; ind < data.dens[ng].size() - 1; ++ind)
+                for (int ind = 0; ind < data.dens[ng].size(); ++ind)
                 {
                     write_float(outfile, data.dens[ng][ind]);
                     write_float(outfile, data.mom_x[ng][ind]);
