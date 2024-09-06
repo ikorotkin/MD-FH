@@ -36,6 +36,8 @@ struct Data
     std::array<std::vector<double>, N_grids> ekin_xz;
     std::array<std::vector<double>, N_grids> ekin_yz;
 
+    std::array<double, N_grids> cell_volume;
+
     double time{0.0};
 
     int step{0};
@@ -68,6 +70,8 @@ struct Data
             ekin_xy[i].resize(cube(grids[i]), 0.0);
             ekin_xz[i].resize(cube(grids[i]), 0.0);
             ekin_yz[i].resize(cube(grids[i]), 0.0);
+
+            cell_volume[i] = 0.0;
         }
 
         time = 0.0;
@@ -81,52 +85,11 @@ struct Data
 };
 
 /*
- * Saves data to data files
+ * Writes a single float value in a binary format
  */
-// int save_data(const std::vector<Data> &collection)
-// {
-//     for (int ng = 0; ng < N_grids; ++ng)
-//     {
-//         std::ofstream outfile;
-
-//         std::string fname = "output_" + std::to_string(grids[ng]) + ".dat";
-
-//         outfile.open(fname);
-
-//         constexpr char delimiter = '\t';
-
-//         outfile << "time_step" << delimiter << "time" << delimiter
-//                 << "density" << delimiter
-//                 << "m_x" << delimiter << "m_y" << delimiter << "m_z" << delimiter
-//                 << "Ekin_xx" << delimiter << "Ekin_yy" << delimiter << "Ekin_zz" << delimiter
-//                 << "Ekin_xy" << delimiter << "Ekin_xz" << delimiter << "Ekin_yz" << '\n';
-
-//         // std::size_t size = collection.size();
-
-//         for (const auto &data : collection)
-//         {
-//             outfile << data.step << delimiter << data.time;
-
-//             for (int ind = 0; ind < data.dens[ng].size(); ++ind)
-//             {
-//                 outfile << delimiter << data.dens[ng][ind];
-//             }
-
-//             outfile << '\n';
-//         }
-
-//         outfile.close();
-//     }
-
-//     return 0;
-// }
-
-/*
-* Writes a single float value in a binary format
-*/
 inline void write_float(std::ofstream &f, float val)
 {
-    f.write(reinterpret_cast<char*>(&val), sizeof(float));
+    f.write(reinterpret_cast<char *>(&val), sizeof(float));
 }
 
 /*
@@ -142,13 +105,13 @@ int save_data_bin(const std::vector<Data> &collection)
 
         outfile.open(fname, std::ios::binary);
 
-        if(outfile && outfile.is_open())
+        if (outfile && outfile.is_open())
         {
             for (const auto &data : collection)
             {
                 write_float(outfile, data.time);
+                write_float(outfile, data.cell_volume[ng]);
 
-                // TODO: Would 10 separate loops be faster?
                 for (int ind = 0; ind < data.dens[ng].size(); ++ind)
                 {
                     write_float(outfile, data.dens[ng][ind]);
@@ -168,7 +131,7 @@ int save_data_bin(const std::vector<Data> &collection)
         }
         else
         {
-            return -1;  // Error opening file
+            return -1; // Error opening file
         }
     }
 
@@ -225,7 +188,7 @@ int main()
         // Reset statistics
         data.reset();
 
-        // Frame header (Frame number, current time step, number of atoms, current time, box size)
+        // Frame header (frame number, current time step, number of atoms, current time, box size)
         int step = trj[i].step;
         int atoms = trj[i].natoms;
         float time = trj[i].time; // [ps]
@@ -294,25 +257,21 @@ int main()
                 // Global index (0..N^3-1)
                 int ind = i + N * j + N * N * k;
 
-                // CV volume [nm]
-                const double V_cell = cube<double>(L / N);
-
                 // Density
-                data.dens[ng][ind] += mass / V_cell;
+                data.dens[ng][ind] += mass;
 
                 // Momentum
-                data.mom_x[ng][ind] += mass * v.x / V_cell;
-                data.mom_y[ng][ind] += mass * v.y / V_cell;
-                data.mom_z[ng][ind] += mass * v.z / V_cell;
+                data.mom_x[ng][ind] += mass * v.x;
+                data.mom_y[ng][ind] += mass * v.y;
+                data.mom_z[ng][ind] += mass * v.z;
 
-                // Kinetic energy tensor
-                // TODO: Remove 0.5, add density
-                data.ekin_xx[ng][ind] += 0.5 * mass * v.x * v.x / V_cell;
-                data.ekin_yy[ng][ind] += 0.5 * mass * v.y * v.y / V_cell;
-                data.ekin_zz[ng][ind] += 0.5 * mass * v.z * v.z / V_cell;
-                data.ekin_xy[ng][ind] += 0.5 * mass * v.x * v.y / V_cell;
-                data.ekin_xz[ng][ind] += 0.5 * mass * v.x * v.z / V_cell;
-                data.ekin_yz[ng][ind] += 0.5 * mass * v.y * v.z / V_cell;
+                // Velocity tensor
+                data.ekin_xx[ng][ind] += mass * v.x * v.x;
+                data.ekin_yy[ng][ind] += mass * v.y * v.y;
+                data.ekin_zz[ng][ind] += mass * v.z * v.z;
+                data.ekin_xy[ng][ind] += mass * v.x * v.y;
+                data.ekin_xz[ng][ind] += mass * v.x * v.z;
+                data.ekin_yz[ng][ind] += mass * v.y * v.z;
 
                 // Time and step
                 data.time = time;
@@ -321,6 +280,37 @@ int main()
             } // Grids
 
         } // Atoms
+
+        // Update averaged values.
+        // Loop over grids.
+        for (int ng = 0; ng < N_grids; ++ng)
+        {
+            // Control volumes: N x N x N
+            int N = grids[ng];
+            int N3 = cube<int>(N);
+
+            // CV volume [nm]
+            const double V_cell = cube<double>(L / N);
+
+            data.cell_volume[ng] = V_cell;
+
+            // Loop over cells in the grid
+            for (int ind = 0; ind < N3; ++ind)
+            {
+                data.dens[ng][ind] /= V_cell;
+
+                data.mom_x[ng][ind] /= V_cell;
+                data.mom_y[ng][ind] /= V_cell;
+                data.mom_z[ng][ind] /= V_cell;
+
+                data.ekin_xx[ng][ind] /= (data.dens[ng][ind] * V_cell);
+                data.ekin_yy[ng][ind] /= (data.dens[ng][ind] * V_cell);
+                data.ekin_zz[ng][ind] /= (data.dens[ng][ind] * V_cell);
+                data.ekin_xy[ng][ind] /= (data.dens[ng][ind] * V_cell);
+                data.ekin_xz[ng][ind] /= (data.dens[ng][ind] * V_cell);
+                data.ekin_yz[ng][ind] /= (data.dens[ng][ind] * V_cell);
+            }
+        }
 
         collection.emplace_back(data);
 

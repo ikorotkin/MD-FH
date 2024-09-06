@@ -81,7 +81,7 @@ file_name = 'output_3.txt'
 
 # Plotting
 plot \
-    file_name u 1:2 w lines ls 1 title 'Density [a.m.u./nm^3]'
+    file_name u 1:3 w lines lw 1.5 title 'Density [a.m.u./nm^3]', \
 
     # '+' using ($1):(0.45):(0.55) lc rgb '#dddddd' notitle with filledcurves, \
     # file_name u 1:2 w points ls 1 title '{/:Italic a} = 1', \

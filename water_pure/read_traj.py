@@ -14,6 +14,8 @@ class MD_Data:
 
     time: np.float32  # Time in ps
 
+    cell_volume: np.float32  # Cell volume [nm^3]
+
     dens: np.float32  # Averaged density [a.m.u. / nm^3]
     mom_x: np.float32  # Averaged X-momentum per unit volume [a.m.u. / (ps nm^2)]
     mom_y: np.float32  # Averaged Y-momentum per unit volume [a.m.u. / (ps nm^2)]
@@ -49,7 +51,10 @@ def generate_MD_data_list(floats: list[np.float32], grid: int) -> list[MD_Data]:
         # Time [ps]
         time = floats[ind]
 
-        ind += 1
+        # Cell volume [nm^3]
+        cell_volume = floats[ind + 1]
+
+        ind += 2
 
         # Loops over all Control Volumes
         for k in range(grid):
@@ -76,6 +81,7 @@ def generate_MD_data_list(floats: list[np.float32], grid: int) -> list[MD_Data]:
                         j,
                         k,
                         time,
+                        cell_volume,
                         dens,
                         mom_x,
                         mom_y,
@@ -138,6 +144,7 @@ if __name__ == "__main__":
         if data.i == i0 and data.j == j0 and data.k == k0:
             print(
                 data.time,
+                data.cell_volume,
                 data.dens,
                 data.mom_x,
                 data.mom_y,
