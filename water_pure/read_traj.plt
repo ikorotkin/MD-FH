@@ -6,7 +6,7 @@ set terminal pngcairo fontscale 3 linewidth 3 font 'Verdana' size 1600,1200
 set output 'output.png'
 
 # Legend
-set key box opaque top left maxrows 3 font 'Verdana,10' width 0.5 height 0.5
+set key box opaque top left maxrows 3 font 'Verdana,10' width -0.5 height 0.5
 # unset key # Switch legend off
 
 # Automatic legend titles taken from the data file
@@ -58,7 +58,7 @@ color_grey = '#777777'
 # color_light_red = '#ef476f'
 
 # Line styles
-set style line 1 lt 1 dashtype  1  lw 2 pointtype 7 pointsize 2.5 lc rgb color_blue
+set style line 1 lt 1 dashtype  1  lw 1.5 pointtype 7 pointsize 2.5 lc rgb color_blue
 set style line 2 lt 2 dashtype '-' lw 2 pointtype 5 pointsize 2.5 lc rgb color_red
 set style line 3 lt 4 dashtype '.' lw 2 pointtype 2 pointsize 2.5
 
@@ -77,11 +77,11 @@ set style line 3 lt 4 dashtype '.' lw 2 pointtype 2 pointsize 2.5
 # fit f(x) 'data.dat' u 1:3 via a,b
 
 # Data file names
-file_name = 'output.txt'
+file_name = 'output_3.txt'
 
 # Plotting
 plot \
-    file_name u 1:2 w lines ls 1 title 'Density'
+    file_name u 1:2 w lines ls 1 title 'Density [a.m.u./nm^3]'
 
     # '+' using ($1):(0.45):(0.55) lc rgb '#dddddd' notitle with filledcurves, \
     # file_name u 1:2 w points ls 1 title '{/:Italic a} = 1', \

@@ -6,6 +6,8 @@ set -e
 # Number of threads for mdrun
 threads=8
 
+# TODO: minimisation and equilibration - on non-modified Gromacs
+
 # Modified Gromacs paths
 gmx_path="/home/ik3g18/workspace/gromacs-2023.1/build"
 
