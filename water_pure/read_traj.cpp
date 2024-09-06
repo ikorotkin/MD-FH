@@ -141,13 +141,22 @@ int save_data_bin(const std::vector<Data> &collection)
 /*
  * Entry point
  */
-int main()
+int main(int argc, char *argv[])
 {
-    traj_reader::traj trj; // Array of frames
+    // Check if a filename argument is provided
+    if (argc < 2)
+    {
+        std::cerr << "ERROR: No file name provided.\n";
+        return 1;
+    }
 
-    std::string filename = "traj.000000.out";
+    // Copy the file name
+    std::string filename = argv[1];
 
     std::cout << "Reading " << filename << ": " << std::flush;
+
+    // Array of frames
+    traj_reader::traj trj;
 
     // Reads trajectory
     int natoms = traj_reader::read(filename, trj);
@@ -155,19 +164,18 @@ int main()
     // Number of frames
     int nframes = trj.size();
 
-    // Number of atoms
     std::cout << nframes << " frame(s), " << natoms << " atoms in each frame.\n";
 
     if (nframes == 0)
     {
         std::cerr << "\nERROR: Number of frames is 0.\n";
-        exit(1);
+        return 1;
     }
 
     if (natoms == 0)
     {
         std::cerr << "\nERROR: Number of atoms is 0.\n";
-        exit(1);
+        return 1;
     }
 
     // Box size
@@ -197,7 +205,7 @@ int main()
         if ((atoms != natoms) || (natoms != trj[i].r.size()))
         {
             std::cerr << "\nERROR: Inconsistent number of atoms.\n";
-            exit(1);
+            return 1;
         }
 
         // Loop over atoms
@@ -251,7 +259,7 @@ int main()
                 if (i < 0 || i >= N || j < 0 || j >= N || k < 0 || k >= N)
                 {
                     std::cerr << "\nERROR: Incorrect Control Volume index.\n";
-                    exit(1);
+                    return 1;
                 }
 
                 // Global index (0..N^3-1)
@@ -322,8 +330,8 @@ int main()
     if (save_data_bin(collection))
     {
         std::cerr << "\nERROR: Could not save data.\n";
-        exit(1);
-    };
+        return 1;
+    }
 
     std::cout << "done.\n";
 
