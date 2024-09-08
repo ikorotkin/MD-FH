@@ -85,7 +85,7 @@ struct Data
 };
 
 /*
- * Writes a single float value in a binary format
+ * Writes a single float value in binary format
  */
 inline void write_float(std::ofstream &f, float val)
 {
@@ -320,7 +320,15 @@ int main(int argc, char *argv[])
             }
         }
 
-        collection.emplace_back(data);
+        // Add frame to collection of frames
+        try
+        {
+            collection.emplace_back(data);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "\nERROR: " << e.what() << "\nOut of memory?\n";
+        }
 
     } // Frames
 
