@@ -218,7 +218,7 @@ int write_out_frame(int64_t step,
     // Initial output
     if(!step)
     {
-        printf("\n==== MODIFIED GROMACS -- Writes full trajectories every time step! ====\n\n");
+        printf("\n==== MODIFIED GROMACS -- Writes full trajectories every `nstxout` time steps! ====\n\n");
     }
 
     // Should we create a new file or not
@@ -1769,7 +1769,7 @@ void gmx::LegacySimulator::do_md()
                     /*
                      * Custom output to a binary file
                      */
-                    if (MAIN(cr))
+                    if (MAIN(cr) && do_per_step(step, ir->nstxout))
                     {
                         if (!write_out_frame(step,
                                              t,

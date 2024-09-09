@@ -16,7 +16,7 @@ T cube(const T x) noexcept
 constexpr auto N_grids{7};
 
 // Grids for post-processing
-std::array<int, N_grids> grids = {3, 5, 7, 10, 15, 21, 32};
+std::array<int, N_grids> grids = {2, 3, 5, 7, 10, 15, 22};
 
 /*
  * Output data structure
@@ -153,7 +153,7 @@ int main(int argc, char *argv[])
     // Copy the file name
     std::string filename = argv[1];
 
-    std::cout << "Reading " << filename << ": " << std::flush;
+    std::cout << "\nREADER: Reading " << filename << ": " << std::endl;
 
     // Array of frames
     traj_reader::traj trj;
@@ -164,7 +164,7 @@ int main(int argc, char *argv[])
     // Number of frames
     int nframes = trj.size();
 
-    std::cout << nframes << " frame(s), " << natoms << " atoms in each frame.\n";
+    std::cout << "\n" << nframes << " frame(s), " << natoms << " atoms in each frame.\n";
 
     if (nframes == 0)
     {
@@ -184,7 +184,7 @@ int main(int argc, char *argv[])
     // Box volume
     double V0 = cube<double>(L0); // [nm^3]
 
-    std::cout << "Processing..." << std::flush;
+    std::cout << "\nREADER: Processing..." << std::endl;
 
     // Output data
     Data data;
@@ -332,8 +332,8 @@ int main(int argc, char *argv[])
 
     } // Frames
 
-    std::cout << "done.\n";
-    std::cout << "Writing..." << std::flush;
+    std::cout << "\n...done.\n";
+    std::cout << "\nREADER: Writing..." << std::endl;
 
     if (save_data_bin(collection))
     {
@@ -341,7 +341,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    std::cout << "done.\n";
+    std::cout << "\n...done.\n";
 
     return 0;
 }

@@ -3,12 +3,12 @@ integrator               = md
 dt                       = 0.002     ; 2 fs
 nsteps                   = 5000    ; 1.0 ns
 
-nstxout                  = 1000
-nstvout                  = 1000
-nstfout                  = 1000
+nstxout                  = 1
+; nstvout                = 1000
+; nstfout                = 1000
 
 nstenergy                = 1
-nstlog                   = 10000
+nstlog                   = 5000
 nstxout-compressed       = 0
 
 continuation             = yes

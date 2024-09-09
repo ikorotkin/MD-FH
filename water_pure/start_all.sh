@@ -6,11 +6,20 @@ set -e
 # Number of threads for mdrun
 threads=8
 
-# TODO: minimisation and equilibration - on non-modified Gromacs
-
-# Modified Gromacs paths
+# Modified Gromacs path
 gmx_path="/home/ik3g18/workspace/gromacs-2023.1/build"
 
+# Array of box sizes (nm)
+# boxes=("7" "10" "15")
+boxes=("15")
+
+# Array of water model types (e.g., tip3p)
+models=("spce" "tip3p")
+
+# Force field (e.g., oplsaa)
+forcefield="charmm27"
+
+# Environment variables for Gromacs
 export GMXBIN="${gmx_path}/bin"
 export GMXDATA="${gmx_path}/share/gromacs"
 export GMXLDLIB="${gmx_path}/lib"
@@ -20,20 +29,24 @@ export GMXMAN="${gmx_path}/share/man"
 gmx="${gmx_path}/bin/gmx"
 mdrun="$gmx mdrun -nt $threads"
 
-# Array of box sizes (nm)
-boxes=("5")
-
-# Array of water model types (e.g., tip3p)
-models=("spce")
-
-# Force field (e.g., oplsaa)
-forcefield="charmm27"
-
 # Color variables
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
 RESET='\033[0m' # Reset to default color
+
+# Build reader
+echo -e "${YELLOW}\nBuilding reader...${RESET}"
+./build_reader.sh
+
+# Clean up
+echo -e "${YELLOW}\nCleaning up...${RESET}"
+if [ -n "$(find . -maxdepth 1 -name "*.out" -print -quit)" ]; then
+    rm -v *.out
+fi
+if [ -n "$(find . -maxdepth 1 -name "traj.*" -print -quit)" ]; then
+    rm -v traj.*
+fi
 
 # Loop over water model types
 for model in "${models[@]}"; do
@@ -55,37 +68,43 @@ for model in "${models[@]}"; do
         # Prints box size and the model type
         echo -e "${YELLOW}\n======== Model: ${model^^} :: box size = $L x $L x $L nm ========${RESET}"
 
+        # Start driver
+        echo -e "${YELLOW}\nStarting driver...${RESET}"
+        ./driver.sh ${model^^} $L &
+        pid=$!
+        echo -e "${YELLOW}The driver has PID: $pid${RESET}"
+
         # Generate initial topology
         ################################################################################
-        # echo -e "${GREEN}\n==== Generate initial ${model^^} topology ====\n${RESET}"
+        echo -e "${GREEN}\n==== Generate initial ${model^^} topology ====\n${RESET}"
 
-        # echo -e "#include \"${forcefield}.ff/forcefield.itp\"" > $top
-        # echo -e "#include \"${forcefield}.ff/${model}.itp\"" >> $top
-        # echo -e "\n[ system ]" >> $top
-        # echo -e "${model^^} water :: $L x $L x $L nm" >> $top
-        # echo -e "\n[ molecules ]" >> $top
+        echo -e "#include \"${forcefield}.ff/forcefield.itp\"" > $top
+        echo -e "#include \"${forcefield}.ff/${model}.itp\"" >> $top
+        echo -e "\n[ system ]" >> $top
+        echo -e "${model^^} water :: $L x $L x $L nm" >> $top
+        echo -e "\n[ molecules ]" >> $top
 
-        # echo "...done."
+        echo "...done."
 
         # Solvate (add H2O) into box LxLxL
         ################################################################################
         echo -e "${GREEN}\n==== Solvate with ${model^^} water (add H2O) ====\n${RESET}"
 
-        # $gmx solvate -cs spc216 -o $conf -p $top -box $L $L $L
+        $gmx solvate -cs spc216 -o $conf -p $top -box $L $L $L
 
         # Minimisation
         ################################################################################
         echo -e "${GREEN}\n==== Minimisation ====\n${RESET}"
 
-        # $gmx grompp -f mdp/min.mdp -c $conf -p $top -o $tpr -po $mdp
-        # $mdrun -s $tpr -o $trr -x $traj -c $conf -e $ener -g min_$log
+        $gmx grompp -f mdp/min.mdp -c $conf -p $top -o $tpr -po $mdp
+        $mdrun -s $tpr -o $trr -x $traj -c $conf -e $ener -g min_$log
 
         # Equilibration (NPT)
         ################################################################################
         echo -e "${GREEN}\n==== Equilibration (NPT) ====\n${RESET}"
 
-        # $gmx grompp -f mdp/eql.mdp -c $conf -p $top -o $tpr -po $mdp
-        # $mdrun -s $tpr -o $trr -x $traj -c $conf -e $ener -g eql_$log -v
+        $gmx grompp -f mdp/eql.mdp -c $conf -p $top -o $tpr -po $mdp
+        $mdrun -s $tpr -o $trr -x $traj -c $conf -e $ener -g eql_$log -v
 
         # Production
         ################################################################################

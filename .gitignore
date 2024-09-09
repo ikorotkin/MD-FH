@@ -12,6 +12,7 @@
 
 # Production files
 spce_*.*
+tip3p_*.*
 
 # Build directory and executables
 build/

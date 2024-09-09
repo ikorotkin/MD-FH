@@ -1,4 +1,4 @@
-# Modified GROMACS for writing full trajectory every time step
+# Modified GROMACS for writing full trajectory every `nstxout` time steps
 
 Unlike the trr-files natively supported by GROMACS, this extension writes a series of smaller files adding `000000`, `000001`, `000002`, etc. suffixes to the output file name. This allows the user to post-process MD trajectories "on the fly", during the simulation, and delete the output files after post-processing to save disk space.
 
@@ -82,7 +82,7 @@ int write_out_frame(int64_t step,
     // Initial output
     if(!step)
     {
-        printf("\n==== MODIFIED GROMACS -- Writes full trajectories every time step! ====\n\n");
+        printf("\n==== MODIFIED GROMACS -- Writes full trajectories every `nstxout` time steps! ====\n\n");
     }
 
     // Should we create a new file or not
@@ -186,7 +186,7 @@ Search for `upd.update_coords` function call in `md.cpp` and add the following c
 /*
  * Custom output to a binary file
  */
-if (MAIN(cr))
+if (MAIN(cr) && do_per_step(step, ir->nstxout))
 {
     if (!write_out_frame(step,
                          t,
@@ -204,6 +204,25 @@ if (MAIN(cr))
 ```
 
 ### Step 4.
+
+Locate `src/gromacs/mdlib/trajectory_writing.cpp` file and comment out the flags that enable writing into trr-files (lines 84-95):
+
+```cpp
+    // if (do_per_step(step, ir->nstxout))
+    // {
+    //     mdof_flags |= MDOF_X;
+    // }
+    // if (do_per_step(step, ir->nstvout))
+    // {
+    //     mdof_flags |= MDOF_V;
+    // }
+    // if (do_per_step(step, ir->nstfout))
+    // {
+    //     mdof_flags |= MDOF_F;
+    // }
+```
+
+### Step 5.
 
 Rebuild modified GROMACS.
 
