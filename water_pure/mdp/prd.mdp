@@ -7,7 +7,7 @@ nstxout                  = 1
 ; nstvout                = 1000
 ; nstfout                = 1000
 
-nstenergy                = 1
+nstenergy                = 1000
 nstlog                   = 5000
 nstxout-compressed       = 0
 

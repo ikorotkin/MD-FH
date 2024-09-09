@@ -6,9 +6,6 @@ set -e
 # Number of output files to wait (excluding the initial traj.000000.out file):
 FILES=5
 
-# Control Volumes (grids)
-grids=("2" "3" "5" "7" "10" "15" "22")
-
 # Path where the output files should be moved
 EXTRENAL_PATH="test_output"
 
@@ -42,12 +39,17 @@ for ((i=0; i<=$FILES; i++)); do
 
     # Call the reader
     echo -e "${RED}-- reading $file_to_read...${RESET}"
-    ./read_traj.exe ${file_to_read}
+    ./read_traj.exe ${file_to_read} $2
 
     # Process the output files
     echo -e "${RED}-- moving output files to the external drive to ${path_to_move}...${RESET}"
-    for grid in "${grids[@]}"; do
-        mv output_${grid}.dat ${path_to_move}/output_${grid}.${i_prefixed}.dat
+    for file in output_*.dat; do
+        # Check if the file exists (this prevents issues if no matching files are found)
+        [ -e "$file" ] || continue
+        # Create the new filename
+        new_file="${file%.dat}.${i_prefixed}.dat"
+        # Rename and move the file
+        mv -v "$file" "${path_to_move}/$new_file"
     done
 
     # Clean up

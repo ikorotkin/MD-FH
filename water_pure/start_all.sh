@@ -10,11 +10,12 @@ threads=8
 gmx_path="/home/ik3g18/workspace/gromacs-2023.1/build"
 
 # Array of box sizes (nm)
-# boxes=("7" "10" "15")
-boxes=("15")
+boxes=("7" "10" "15")
+# boxes=("7" "10")
 
 # Array of water model types (e.g., tip3p)
-models=("spce" "tip3p")
+# models=("spce" "tip3p")
+models=("spce")
 
 # Force field (e.g., oplsaa)
 forcefield="charmm27"
@@ -46,6 +47,9 @@ if [ -n "$(find . -maxdepth 1 -name "*.out" -print -quit)" ]; then
 fi
 if [ -n "$(find . -maxdepth 1 -name "traj.*" -print -quit)" ]; then
     rm -v traj.*
+fi
+if [ -n "$(find . -maxdepth 1 -name "output_*.dat" -print -quit)" ]; then
+    rm -v output_*.dat
 fi
 
 # Loop over water model types

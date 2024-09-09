@@ -13,10 +13,10 @@ T cube(const T x) noexcept
 }
 
 // Number of grids for post-processing
-constexpr auto N_grids{7};
+constexpr auto N_grids{3};
 
 // Grids for post-processing
-std::array<int, N_grids> grids = {2, 3, 5, 7, 10, 15, 22};
+std::array<int, N_grids> grids = {0, 0, 0};
 
 /*
  * Output data structure
@@ -143,17 +143,37 @@ int save_data_bin(const std::vector<Data> &collection)
  */
 int main(int argc, char *argv[])
 {
-    // Check if a filename argument is provided
-    if (argc < 2)
+    // Check if filename and box size arguments are provided
+    if (argc < 3)
     {
-        std::cerr << "ERROR: No file name provided.\n";
+        std::cerr << "ERROR: No file name and/or box size provided.\n";
         return 1;
     }
 
-    // Copy the file name
+    // Copy the file name and the box size
     std::string filename = argv[1];
+    std::string boxsize = argv[2];
 
-    std::cout << "\nREADER: Reading " << filename << ": " << std::endl;
+    // Set grids for averaging
+    if (boxsize == "7")
+    {
+        grids = {2, 5, 10};
+    }
+    else if (boxsize == "10")
+    {
+        grids = {3, 7, 15};
+    }
+    else if (boxsize == "15")
+    {
+        grids = {5, 10, 22};
+    }
+    else
+    {
+        std::cerr << "ERROR: Box size (second argument) should be 7, 10 or 15.\n";
+        return 1;
+    }
+
+    std::cout << "\nREADER: Reading " << filename << " (L = " << boxsize << " nm)..." << std::endl;
 
     // Array of frames
     traj_reader::traj trj;
@@ -164,7 +184,8 @@ int main(int argc, char *argv[])
     // Number of frames
     int nframes = trj.size();
 
-    std::cout << "\n" << nframes << " frame(s), " << natoms << " atoms in each frame.\n";
+    std::cout << "\n"
+              << nframes << " frame(s), " << natoms << " atoms in each frame.\n";
 
     if (nframes == 0)
     {
