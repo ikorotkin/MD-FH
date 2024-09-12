@@ -226,4 +226,4 @@ Locate `src/gromacs/mdlib/trajectory_writing.cpp` file and comment out the flags
 
 Rebuild modified GROMACS.
 
-Here is an [example](https://github.com/ikorotkin/MD-FH/blob/master/gromacs_modified/md.cpp) of modified `md.cpp` file for GROMACS 2023.1.
+This folder contains an [example](https://github.com/ikorotkin/MD-FH/tree/master/gromacs_modified) of modified `md.cpp` and `trajectory_writing.cpp` files for GROMACS 2023.1.
