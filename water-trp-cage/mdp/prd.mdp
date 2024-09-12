@@ -1,16 +1,18 @@
+define                   = -DPOSRES  ; Position restrain for the protein
 
 integrator               = md
 dt                       = 0.002     ; 2 fs
 nsteps                   = 5000    ; 1.0 ns
 
-nstenergy                = 5000
+nstxout                  = 1
+; nstvout                = 1000
+; nstfout                = 1000
+
+nstenergy                = 1000
 nstlog                   = 5000
 nstxout-compressed       = 0
 
-gen-vel                  = yes
-gen-temp                 = 293.15
-gen-seed                 = -1
-
+continuation             = yes
 constraint-algorithm     = lincs
 constraints              = h-bonds
 
@@ -25,11 +27,6 @@ DispCorr                 = EnerPres
 
 tcoupl                   = Nose-Hoover
 tc-grps                  = System
-tau-t                    = 1.0
+tau-t                    = 2.0
 ref-t                    = 293.15
 nhchainlength            = 1
-
-pcoupl                   = C-rescale
-tau_p                    = 5.0
-compressibility          = 4.59e-5    ; https://roymech.org/Related/Fluids/Fluids_Water_Props.html
-ref_p                    = 1.0

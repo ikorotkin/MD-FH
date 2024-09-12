@@ -1,3 +1,4 @@
+define                   = -DPOSRES  ; Position restrain for the protein
 
 integrator               = md
 dt                       = 0.002     ; 2 fs
